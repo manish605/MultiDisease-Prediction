@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+import joblib
 
 # Load dataset
 df = pd.read_csv("datasets/diabetes.csv")
@@ -50,6 +52,20 @@ print(f"Train Accuracy: {train_acc:.4f}")
 print(f"Test Accuracy:  {test_acc:.4f}")
 print("=======================================================")
 
+# Save model, scaler and feature names into .sav files
+os.makedirs('models', exist_ok=True)
+model_path = os.path.join('models', 'diabetes_model.sav')
+scaler_path = os.path.join('models', 'diabetes_scaler.sav')
+features_path = os.path.join('models', 'diabetes_features.sav')
+
+joblib.dump(best_clf, model_path)
+joblib.dump(scaler, scaler_path)
+joblib.dump(feature_names, features_path)
+
+print(f"Saved trained model to: {model_path}")
+print(f"Saved scaler to: {scaler_path}")
+print(f"Saved feature names to: {features_path}")
+
 # Accuracy visualization
 plt.bar(["Train", "Test"], [train_acc, test_acc], color=["lightblue", "lightcoral"])
 plt.title("Diabetes Model - Train vs Test Accuracy")
@@ -63,11 +79,3 @@ plt.title("Confusion Matrix - Diabetes")
 plt.xlabel("Predicted")
 plt.ylabel("Actual")
 plt.show()
-import pickle
-
-pickle.dump(model, open("diabetes_model.sav", "wb"))
-
-
-
-
-
