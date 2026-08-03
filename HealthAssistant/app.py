@@ -1,11 +1,12 @@
 import streamlit as st
 import numpy as np
 from streamlit_option_menu import option_menu
+import pickle
+from pathlib import Path
 
-# Import all models
-from diabetes_model import feature_names as d_features, scaler as d_scaler, best_clf as d_model
-from heart_model import feature_names as h_features, scaler as h_scaler, best_clf as h_model
-from parkinson_model import feature_names as p_features, scaler as p_scaler, best_clf as p_model
+# Determine base directory (the directory containing this app.py)
+BASE_DIR = Path(__file__).resolve().parent
+MODELS_DIR = BASE_DIR / "models"
 
 st.set_page_config(page_title="Health Assistant", page_icon="🩺", layout="wide")
 
@@ -16,6 +17,38 @@ with st.sidebar:
         icons=["activity", "heart", "brain"],
         default_index=0
     )
+
+# Helper to load a pickled model bundle (dict with keys: model, scaler, features)
+def load_model_bundle(filename):
+    path = MODELS_DIR / filename
+    try:
+        with open(path, "rb") as f:
+            bundle = pickle.load(f)
+        return bundle
+    except FileNotFoundError:
+        st.error(f"Model file not found: {path}.\nPlease run the training script `HealthAssistant/train_models.py` locally to generate model files and commit them, or upload the .sav files to {MODELS_DIR}.")
+        st.stop()
+    except Exception as e:
+        st.error(f"Failed to load model file {path}: {e}")
+        st.stop()
+
+# Load model bundles (each bundle is a dict: { 'model': ..., 'scaler': ..., 'features': [...] })
+d_bundle = load_model_bundle("diabetes_model.sav")
+h_bundle = load_model_bundle("heart_model.sav")
+p_bundle = load_model_bundle("parkinsons_model.sav")
+
+# Unpack
+_d_model = d_bundle["model"]
+d_scaler = d_bundle["scaler"]
+d_features = d_bundle["features"]
+
+_h_model = h_bundle["model"]
+h_scaler = h_bundle["scaler"]
+h_features = h_bundle["features"]
+
+_p_model = p_bundle["model"]
+p_scaler = p_bundle["scaler"]
+p_features = p_bundle["features"]
 
 # ------------------ Diabetes ------------------
 if selected == "Diabetes Prediction":
@@ -30,7 +63,7 @@ if selected == "Diabetes Prediction":
 
     if st.button("Predict Diabetes"):
         scaled = d_scaler.transform([vals])
-        pred = d_model.predict(scaled)[0]
+        pred = _d_model.predict(scaled)[0]
         st.success("🩸 Diabetic" if pred == 1 else "✅ Not Diabetic")
 
 # ------------------ Heart ------------------
@@ -46,7 +79,7 @@ elif selected == "Heart Disease Prediction":
 
     if st.button("Predict Heart Disease"):
         scaled = h_scaler.transform([vals])
-        pred = h_model.predict(scaled)[0]
+        pred = _h_model.predict(scaled)[0]
         st.success("💔 Has Heart Disease" if pred == 1 else "❤️ No Heart Disease")
 
 # ------------------ Parkinson's ------------------
@@ -68,7 +101,5 @@ else:
 
     if st.button("Predict Parkinson's"):
         scaled = p_scaler.transform([vals])
-        pred = p_model.predict(scaled)[0]
+        pred = _p_model.predict(scaled)[0]
         st.success("🧠 Has Parkinson's" if pred == 1 else "✅ No Parkinson's")
-
-
