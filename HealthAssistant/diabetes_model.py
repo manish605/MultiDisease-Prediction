@@ -63,6 +63,9 @@ plt.title("Confusion Matrix - Diabetes")
 plt.xlabel("Predicted")
 plt.ylabel("Actual")
 plt.show()
+import pickle
+
+pickle.dump(model, open("diabetes_model.sav", "wb"))
 
 
 
